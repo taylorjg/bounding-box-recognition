@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Recognise simple shapes and their bounding boxes</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="styles.css" />
+  <template id="error-panel-template">
+    <div id="error-panel" class="alert alert-danger" role="alert">
+      <button type="button" class="close" aria-label="Close">
+        <span aria-hidden="true">&times;</span>
+      </button>
+      <span class="error-panel-text"></span>
+    </div>
+  </template>
+</head>
+
+<body>
+  <div class="container">
+    <div class="row">
+      <div class="version pull-right">(version: <%= htmlWebpackPlugin.options.version %>)</div>
+    </div>
+
+    <div class="row">
+      <hr />
+    </div>
+
+    <div class="row">
+      <div class="pull-right">
+        <button id="show-visor-btn" class="btn btn-primary btn-xs">Show Visor</button>
+      </div>
+    </div>
+
+    <div class="row">
+      <h1>Train Model</h1>
+      <button id="train-model-btn" class="btn btn-primary btn-xs">Train</button>
+      <button id="save-model-btn" class="btn btn-default btn-xs">Save</button>
+      <button id="load-model-btn" class="btn btn-default btn-xs">Load</button>
+      <button id="clear-training-data-btn" class="btn btn-danger btn-xs">Clear</button>
+      <div id="training-data"></div>
+    </div>
+
+    <div class="row">
+      <hr />
+    </div>
+
+    <div class="row">
+      <h1>Make Predictions</h1>
+      <button id="make-predictions-btn" class="btn btn-primary btn-xs">Predict</button>
+      <button id="clear-predictions-btn" class="btn btn-danger btn-xs">Clear</button>
+      <div id="predictions"></div>
+    </div>
+
+    <div class="row">
+      <hr />
+    </div>
+  </div>
+</body>
+
+</html>

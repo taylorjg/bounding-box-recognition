@@ -1,0 +1,26 @@
+.container {
+  margin-top: 2rem;
+}
+
+.version {
+  font-size: small;
+  font-style: italic;
+}
+
+.image-canvas {
+  border: 1px solid black;
+  margin: .5rem;
+}
+
+#error-panel {
+  position: fixed;
+  max-width: calc(100% - 40px);
+  overflow-wrap: break-word;
+  left: 50%;
+  bottom: 0;
+  transform: translateX(-50%);
+}
+
+#error-panel .close {
+  margin-left: 1rem;
+}
