@@ -3,7 +3,7 @@ import * as R from 'ramda'
 import * as C from './constants'
 import * as I from './image'
 
-const generateSquare = cb => index => {
+const generateSquare = cb => async index => {
   const upperCoordLimit = C.IMAGE_SIZE - 2 * C.SHAPE_MARGIN - C.SHAPE_MIN_SIZE
   const x = Math.random() * upperCoordLimit + C.SHAPE_MARGIN
   const y = Math.random() * upperCoordLimit + C.SHAPE_MARGIN
@@ -35,16 +35,17 @@ const generateSquare = cb => index => {
     boundingBox
   }
 
-  cb && cb(shape, index)
+  cb && await cb(shape, index)
 
   return shape
 }
 
-export const generateShapes = (numShapes, cb) => {
-  const shapes = R.times(generateSquare(cb), numShapes)
+export const generateShapes = async (numShapes, cb) => {
+  const promises = R.times(generateSquare(cb), numShapes)
+  const shapes = await Promise.all(promises)
   const imageTensors = R.pluck('imageTensor', shapes)
   const boundingBoxes = R.pluck('boundingBox', shapes)
   const xs = tf.stack(imageTensors)
   const ys = tf.tensor2d(boundingBoxes)
-  return { xs, ys }
+  return { imageTensors, xs, ys }
 }

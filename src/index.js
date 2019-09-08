@@ -5,10 +5,20 @@ import * as C from './constants'
 import * as U from './utils'
 import * as DC from './drawCanvas'
 import { generateShapes } from './shapes'
+import { showErrorPanel, hideErrorPanel } from './errorPanel'
 
 let model = undefined
+let training = false
+let predicting = false
 let trained = false
 let visor = undefined
+
+const reportMemory = () => {
+  log.info(`tf memory: ${JSON.stringify(tf.memory())}`)
+}
+
+const yieldToEventLoop = () =>
+  new Promise(resolve => setTimeout(resolve, 0))
 
 const getVisor = () => {
   if (!visor) {
@@ -52,103 +62,136 @@ const createModel = () => {
   return model
 }
 
-// TODO: add try/catch/finally
-// TODO: disposables
 const onTrainModel = async () => {
-  trainModelBtn.disabled = true
-  U.deleteChildren(trainingDataElement)
-  const cb = async (shape, index) => {
-    if (index >= 10) return
-    const canvas = await DC.drawImageTensor(trainingDataElement, shape.imageTensor)
-    DC.drawBoundingBox(canvas, shape.boundingBox, 'blue')
+  const disposables = []
+  try {
+    hideErrorPanel()
+    trained = false
+    training = true
+    await yieldToEventLoop()
+
+    U.deleteChildren(trainingDataElement)
+    await yieldToEventLoop()
+
+    model && model.dispose()
+
+    const cb = async (shape, index) => {
+      if (index >= 10) return
+      const canvas = await DC.drawImageTensor(trainingDataElement, shape.imageTensor)
+      DC.drawBoundingBox(canvas, shape.boundingBox, 'blue')
+    }
+    const { imageTensors, xs, ys } = await generateShapes(100, cb)
+    disposables.push(...imageTensors, xs, ys)
+    await yieldToEventLoop()
+
+    model = createModel() // eslint-disable-line
+
+    model.compile({
+      loss: 'meanAbsoluteError',
+      optimizer: tf.train.rmsprop(5e-3)
+    })
+
+    const trainingSurface = getVisor().surface({
+      tab: 'Bounding Box Recognition',
+      name: 'Model Training'
+    })
+
+    const customCallback = tfvis.show.fitCallbacks(
+      trainingSurface,
+      ['loss', 'val_loss', 'acc', 'val_acc'],
+      { callbacks: ['onBatchEnd', 'onEpochEnd'] }
+    )
+
+    const args = {
+      epochs: 10,
+      batchSize: 25,
+      validationSplit: 0.2,
+      callbacks: customCallback
+    }
+
+    await model.fit(xs, ys, args)
+    trained = true
+  } catch (error) {
+    log.error(`[onTrainModel] ${error.message}`)
+    showErrorPanel(error.message)
+  } finally {
+    disposables.forEach(disposable => disposable.dispose())
+    reportMemory()
+    training = false
   }
-  const { xs, ys } = generateShapes(100, cb)
-
-  model = createModel()
-
-  model.compile({
-    loss: 'meanAbsoluteError',
-    optimizer: tf.train.rmsprop(5e-3)
-  })
-
-  const trainingSurface = getVisor().surface({
-    tab: 'Bounding Box Recognition',
-    name: 'Model Training'
-  })
-
-  const customCallback = tfvis.show.fitCallbacks(
-    trainingSurface,
-    ['loss', 'val_loss', 'acc', 'val_acc'],
-    { callbacks: ['onBatchEnd', 'onEpochEnd'] }
-  )
-
-  const args = {
-    epochs: 10,
-    // batchSize: 10,
-    validationSplit: 0.2,
-    callbacks: customCallback
-  }
-
-  await model.fit(xs, ys, args)
-
-  trained = true
-  trainModelBtn.disabled = false
-  xs.dispose()
-  ys.dispose()
 }
 
 const onSaveModel = () => {
-  // TODO
+  try {
+    hideErrorPanel()
+    // TODO
+  } catch (error) {
+    log.error(`[onSaveModel] ${error.message}`)
+    showErrorPanel(error.message)
+  } finally {
+    reportMemory()
+  }
 }
 
 const onLoadModel = () => {
-  // TODO
+  try {
+    hideErrorPanel()
+    model && model.dispose()
+    // TODO
+  } catch (error) {
+    log.error(`[onLoadModel] ${error.message}`)
+    showErrorPanel(error.message)
+  } finally {
+    reportMemory()
+  }
 }
 
 const onClearTrainingData = () => {
-  U.deleteChildren(trainingDataElement)  
+  U.deleteChildren(trainingDataElement)
+  model && model.dispose()
+  trained = false
+  reportMemory()
 }
 
-// TODO: add try/catch/finally
-// TODO: disposables
 const onMakePredictions = async () => {
-  makePredictionsBtn.disabled = true
-  U.deleteChildren(predictionsElement)
-  const { xs, ys } = generateShapes(10)
-  const outputs = model.predict(xs)
-  const predictions = await outputs.array()
-  const imageTensors = tf.unstack(xs)
-  const boundingBoxes = await ys.array()
-  const promises = imageTensors.map(async (imageTensor, index) => {
-    const actualBoundingBox = boundingBoxes[index]
-    const predictedBoundingBox = predictions[index]
-    const canvas = await DC.drawImageTensor(predictionsElement, imageTensor)
-    DC.drawBoundingBox(canvas, actualBoundingBox, 'blue')
-    DC.drawBoundingBox(canvas, predictedBoundingBox, 'red')
-  })
-  await Promise.all(promises)
-  outputs.dispose()
-  xs.dispose()
-  ys.dispose()
-  makePredictionsBtn.disabled = false
+  const disposables = []
+  try {
+    hideErrorPanel()
+    predicting = true
+    await yieldToEventLoop()
+
+    U.deleteChildren(predictionsElement)
+    await yieldToEventLoop()
+
+    const { imageTensors, xs, ys } = await generateShapes(10)
+    disposables.push(...imageTensors, xs, ys)
+
+    const outputs = model.predict(xs)
+    disposables.push(outputs)
+    const predictions = await outputs.array()
+    const boundingBoxes = await ys.array()
+
+    const promises = imageTensors.map(async (imageTensor, index) => {
+      const actualBoundingBox = boundingBoxes[index]
+      const predictedBoundingBox = predictions[index]
+      const canvas = await DC.drawImageTensor(predictionsElement, imageTensor)
+      DC.drawBoundingBox(canvas, actualBoundingBox, 'blue')
+      DC.drawBoundingBox(canvas, predictedBoundingBox, 'red')
+    })
+    await Promise.all(promises)
+  } catch (error) {
+    log.error(`[onMakePredictions] ${error.message}`)
+    showErrorPanel(error.message)
+  } finally {
+    disposables.forEach(disposable => disposable.dispose())
+    reportMemory()
+    predicting = false
+  }
 }
 
 const onClearPredictions = () => {
   U.deleteChildren(predictionsElement)
   visor && visor.close()
-}
-
-const updateButtonStates = () => {
-  showVisorBtn.disabled = !visor
-  saveModelBtn.disabled = !trained
-  makePredictionsBtn.disabled = !trained
-  clearTrainingDataBtn.disabled = !trainingDataElement.hasChildNodes()
-  clearPredictionsBtn.disabled = !predictionsElement.hasChildNodes()
-}
-
-const onIdle = () => {
-  updateButtonStates()
-  requestAnimationFrame(onIdle)
 }
 
 showVisorBtn.addEventListener('click', onShowVisor)
@@ -158,6 +201,20 @@ loadModelBtn.addEventListener('click', onLoadModel)
 clearTrainingDataBtn.addEventListener('click', onClearTrainingData)
 makePredictionsBtn.addEventListener('click', onMakePredictions)
 clearPredictionsBtn.addEventListener('click', onClearPredictions)
+
+const updateButtonStates = () => {
+  showVisorBtn.disabled = !visor
+  saveModelBtn.disabled = !trained
+  trainModelBtn.disabled = training
+  makePredictionsBtn.disabled = !trained || predicting
+  clearTrainingDataBtn.disabled = !trainingDataElement.hasChildNodes() || training
+  clearPredictionsBtn.disabled = !predictionsElement.hasChildNodes() || predicting
+}
+
+const onIdle = () => {
+  updateButtonStates()
+  requestAnimationFrame(onIdle)
+}
 
 const main = async () => {
   log.setLevel('info')
