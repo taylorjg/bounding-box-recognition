@@ -30,8 +30,8 @@ const getVisor = () => {
 
 const showVisorBtn = document.getElementById('show-visor-btn')
 const trainModelBtn = document.getElementById('train-model-btn')
-const saveModelBtn = document.getElementById('save-model-btn')
-const loadModelBtn = document.getElementById('load-model-btn')
+// const saveModelBtn = document.getElementById('save-model-btn')
+// const loadModelBtn = document.getElementById('load-model-btn')
 const clearTrainingDataBtn = document.getElementById('clear-training-data-btn')
 const makePredictionsBtn = document.getElementById('make-predictions-btn')
 const clearPredictionsBtn = document.getElementById('clear-predictions-btn')
@@ -121,30 +121,30 @@ const onTrainModel = async () => {
   }
 }
 
-const onSaveModel = () => {
-  try {
-    hideErrorPanel()
-    // TODO
-  } catch (error) {
-    log.error(`[onSaveModel] ${error.message}`)
-    showErrorPanel(error.message)
-  } finally {
-    reportMemory()
-  }
-}
+// const onSaveModel = () => {
+//   try {
+//     hideErrorPanel()
+//     // TODO
+//   } catch (error) {
+//     log.error(`[onSaveModel] ${error.message}`)
+//     showErrorPanel(error.message)
+//   } finally {
+//     reportMemory()
+//   }
+// }
 
-const onLoadModel = () => {
-  try {
-    hideErrorPanel()
-    model && model.dispose()
-    // TODO
-  } catch (error) {
-    log.error(`[onLoadModel] ${error.message}`)
-    showErrorPanel(error.message)
-  } finally {
-    reportMemory()
-  }
-}
+// const onLoadModel = () => {
+//   try {
+//     hideErrorPanel()
+//     model && model.dispose()
+//     // TODO
+//   } catch (error) {
+//     log.error(`[onLoadModel] ${error.message}`)
+//     showErrorPanel(error.message)
+//   } finally {
+//     reportMemory()
+//   }
+// }
 
 const onClearTrainingData = () => {
   U.deleteChildren(trainingDataElement)
@@ -196,15 +196,15 @@ const onClearPredictions = () => {
 
 showVisorBtn.addEventListener('click', onShowVisor)
 trainModelBtn.addEventListener('click', onTrainModel)
-saveModelBtn.addEventListener('click', onSaveModel)
-loadModelBtn.addEventListener('click', onLoadModel)
+// saveModelBtn.addEventListener('click', onSaveModel)
+// loadModelBtn.addEventListener('click', onLoadModel)
 clearTrainingDataBtn.addEventListener('click', onClearTrainingData)
 makePredictionsBtn.addEventListener('click', onMakePredictions)
 clearPredictionsBtn.addEventListener('click', onClearPredictions)
 
 const updateButtonStates = () => {
   showVisorBtn.disabled = !visor
-  saveModelBtn.disabled = !trained
+  // saveModelBtn.disabled = !trained
   trainModelBtn.disabled = training
   makePredictionsBtn.disabled = !trained || predicting
   clearTrainingDataBtn.disabled = !trainingDataElement.hasChildNodes() || training
