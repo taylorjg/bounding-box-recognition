@@ -204,10 +204,11 @@ clearPredictionsBtn.addEventListener('click', onClearPredictions)
 
 const updateButtonStates = () => {
   showVisorBtn.disabled = !visor
-  // saveModelBtn.disabled = !trained
   trainModelBtn.disabled = training
-  makePredictionsBtn.disabled = !trained || predicting
+  // saveModelBtn.disabled = !trained
+  // loadModelBtn.disabled = false
   clearTrainingDataBtn.disabled = !trainingDataElement.hasChildNodes() || training
+  makePredictionsBtn.disabled = !trained || predicting
   clearPredictionsBtn.disabled = !predictionsElement.hasChildNodes() || predicting
 }
 
