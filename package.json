@@ -1,6 +1,6 @@
 {
   "name": "bounding-box-recognition",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Train a model to recognise simple shapes and their bounding boxes",
   "scripts": {
     "eslint": "eslint .",
